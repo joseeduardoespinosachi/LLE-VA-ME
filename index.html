@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LLE-VA-ME — Ya no busques taxi. Solo pídelo y llega por ti.</title>
+<style>
+/* LLE-VA-ME — estilos. Azul = confianza, verde = tranquilidad. */
+*{box-sizing:border-box}
+:root{--blue:#1D6FB8;--green:#1F9D66;--dark:#16324A;--bg:#FFF9F1;--card:#fff;--muted:#5b6b7a;--line:#e8e0d0;--red:#c0392b}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--dark);padding-bottom:110px}
+header{background:linear-gradient(135deg,#1D6FB8,#1F9D66);color:#fff;padding:14px 16px 12px;text-align:center;position:sticky;top:0;z-index:20}
+header h1{margin:0;font-size:30px;letter-spacing:1px}
+header p{margin:2px 0 0;font-size:14px;opacity:.95}
+header .mini{font-size:12px;margin-top:4px;opacity:.9}
+.wrap{max-width:720px;margin:0 auto;padding:12px 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center}
+.step{background:#eaf4ff;border-radius:12px;padding:12px 6px}
+.step b{display:block;font-size:22px}
+.step span{font-size:13px}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tabs button{flex:1;padding:12px;border-radius:999px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:700;font-size:15px}
+.tabs button.active{background:var(--blue);color:#fff}
+label{display:block;font-size:14px;font-weight:600;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:12px;border:1.5px solid #cbd5e1;border-radius:12px;font-size:16px;background:#FFFDF6;color:var(--dark)}
+input::placeholder{color:#6b7a89;opacity:1}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.small{font-size:13px;color:var(--muted)}
+.btn{display:block;width:100%;padding:15px;border:0;border-radius:999px;font-size:18px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none}
+.btn-green{background:var(--green);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-ghost{background:#fff;border:2px solid var(--blue);color:var(--blue)}
+.btn-red{background:var(--red);color:#fff}
+.btn-small{padding:10px 14px;font-size:15px;width:auto;display:inline-block}
+.sticky{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:30}
+.sticky .btn{max-width:720px;margin:0 auto}
+.driver{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
+.driver img,.avatar{width:96px;height:96px;object-fit:cover;border-radius:14px;background:#dbeafe;display:flex;align-items:center;justify-content:center;font-size:34px;flex-shrink:0}
+.driver h3{margin:0;font-size:22px}
+.badge{display:inline-block;background:#e6f7ee;color:#14532d;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;margin:2px 3px 2px 0}
+.badge.blue{background:#dbeafe;color:#1e3a8a}
+.badge.gold{background:#fef3c7;color:#92400e}
+.colorpill{display:inline-flex;align-items:center;gap:6px;background:#f1f5f9;border-radius:999px;padding:4px 10px;font-weight:700}
+.dot{width:16px;height:16px;border-radius:50%;border:1px solid #999;display:inline-block}
+.pill{display:inline-block;background:#eef2ff;border-radius:999px;padding:6px 10px;margin:3px;font-size:14px}
+.pill button{border:0;background:none;font-size:14px;cursor:pointer}
+.notice{background:#fff7ed;border:1px solid #fdba74;border-radius:12px;padding:12px;margin:10px 0}
+.ok{background:#ecfdf5;border:1px solid #86efac;border-radius:12px;padding:12px;margin:10px 0}
+.danger{border:2px solid #fca5a5;background:#fef2f2;border-radius:12px;padding:12px;margin:10px 0}
+.hidden{display:none!important}
+.stars button{font-size:28px;border:0;background:none;cursor:pointer}
+footer{font-size:12px;color:var(--muted);text-align:center;padding:18px}
+@media(max-width:480px){.row{grid-template-columns:1fr}.driver img,.avatar{width:72px;height:72px}}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>LLE-VA-ME</h1>
+  <p>Ya no busques taxi. Solo pídelo y llega por ti.</p>
+  <div class="mini">Precio aprox. $10 por un solo destino (trate con el mototaxista) · Pago en efectivo</div>
+</header>
+<div class="wrap">
+  <div class="card steps">
+    <div class="step"><b>👆</b><span>1. Pide</span></div>
+    <div class="step"><b>✅</b><span>2. Te aceptan</span></div>
+    <div class="step"><b>🛺</b><span>3. Llega</span></div>
+  </div>
+  <div id="notice" class="ok hidden"></div>
+  <div class="tabs">
+    <button id="tab-pasajero" class="active" onclick="showTab('pasajero')">Pasajero</button>
+    <button id="tab-chofer" onclick="showTab('chofer')">Mototaxista</button>
+    <button id="tab-admin" onclick="showTab('admin')">Admin</button>
+  </div>
+  <section id="view-pasajero">
+    <div class="card">
+      <h2 style="margin-top:0">¿A dónde vas? 😌 Tranquilo: esto no es un trámite…</h2>
+      <div id="accountBox"></div>
+      <form id="tripForm" onsubmit="return submitTrip(event)">
+        <div class="row">
+          <div><label>Tu nombre</label><input id="p-nombre" required placeholder="Ej: José"></div>
+          <div><label>Tu teléfono</label><input id="p-tel" required inputmode="tel" placeholder="Ej: 999 123 4567"></div>
+        </div>
+        <label>¿Dónde te recogen?</label>
+        <button type="button" class="btn btn-blue" id="gpsBtn" onclick="useGPS()">📍 Usa mi ubicación actual</button>
+        <div id="gpsStatus" class="small" style="margin-top:6px">Solo el chofer que acepte ve tu ubicación exacta.</div>
+        <label>Referencia para encontrarte (opcional, solo si quieres)</label>
+        <input id="p-ref" placeholder="Solo si el GPS no es exacto o tu casa es difícil de encontrar. Si no, déjalo vacío.">
+        <label>¿A dónde vas?</label>
+        <input id="p-destino" required placeholder="Ej: iglesia, salida, parque">
+        <div class="small">No tiene que ser exacto, se lo explicas al conductor.</div>
+        <div id="savedPlaces"></div>
+        <div class="row">
+          <div><label>¿Cuántas personas?</label><input id="p-personas" type="number" min="1" max="6" value="1"></div>
+          <div><label>Carga extra</label><select id="p-carga"><option value="">Sin carga extra</option><option>Maletas</option><option>Bolsas grandes</option><option>Objetos grandes</option></select></div>
+        </div>
+        <label><input type="checkbox" id="p-otra" onchange="toggleOtra()" style="width:auto"> 👥 Pedir para otra persona</label>
+        <div id="otraBox" class="hidden">
+          <div class="row"><div><label>Nombre de quien viaja</label><input id="p-otra-nombre" placeholder="Ej: mamá, abuela"></div>
+          <div><label>Teléfono de quien viaja *</label><input id="p-otra-tel" placeholder="Obligatorio"></div></div>
+        </div>
+        <div class="row">
+          <div><label>¿Cuánto es tu billete? (opcional)</label><select id="p-billete"><option value="">No respondo</option><option>$20</option><option>$50</option><option>$100</option><option>$200</option><option>$500</option></select></div>
+          <div><label>¿Ocupas cambio?</label><select id="p-cambio"><option value="">No respondo</option><option>Sí, ocupo cambio</option><option>No, llevo exacto</option></select></div>
+        </div>
+        <label><input type="checkbox" id="p-mascota" style="width:auto"> 🐾 Llevo mascota</label>
+        <label>¿Cuándo?</label>
+        <div class="row"><div><select id="p-cuando" onchange="toggleProg()"><option value="ahora">Ahorita</option><option value="programado">Programarlo</option></select></div>
+        <div id="progBox" class="hidden"><input id="p-fecha" type="datetime-local"></div></div>
+        <p class="small">Precio aprox. $10 por un solo destino (trate con el mototaxista). Pago en efectivo. Solo una parada: si quieres una parada antes del destino, avisa, tiene costo extra según cada chofer.</p>
+        <p><a href="#" onclick="showTerms(event)">Leer los términos y la privacidad</a></p>
+      </form>
+      <div id="myTrips"></div>
+      <div id="savePlaceBox"></div>
+    </div>
+    <div class="card" id="nightCard">
+      <h3 style="margin-top:0">🌙 Taxi nocturno (12 a 6 am)</h3>
+      <p class="small">De 12 de la noche a 6 de la mañana. Solo choferes que trabajan de madrugada. Tiene costo extra: trátalo y acuérdalo con el conductor antes.</p>
+      <button class="btn btn-blue" onclick="showNightDrivers()">🌙 Solicitar taxi nocturno (costo extra)</button>
+      <div id="nightList"></div>
+    </div>
+    <div class="card">
+      <button class="btn btn-ghost" onclick="toggleDrivers()">🛺 Mototaxistas de aquí · <span id="driverCount">0</span> disponibles</button>
+      <div id="driverList" class="hidden"></div>
+    </div>
+  </section>
+  <section id="view-chofer" class="hidden">
+    <div class="card">
+      <h2 style="margin-top:0">Gana con tu mototaxi — recibe clientes sin salir a buscar pasaje</h2>
+      <div id="driverPanel"><p class="small">Pica “Ver mi panel” y pon tu teléfono para ver si ya te aprobaron.</p><button class="btn btn-blue" onclick="renderDriverPanel()">Ver mi panel</button></div>
+      <h3>Regístrate como mototaxista</h3>
+      <p class="small">Tu registro queda <b>pendiente</b> hasta que el administrador (dueño) lo apruebe. La foto de tu INE solo se usa para verificar que tu foto de perfil coincide con tu credencial.</p>
+      <form onsubmit="return registerDriver(event)">
+        <div class="row"><div><label>Tu nombre</label><input id="d-nombre" required></div><div><label>Tu teléfono</label><input id="d-tel" required></div></div>
+        <label>Foto de perfil (tu cara)</label><input type="file" id="d-foto" accept="image/*">
+        <label>Foto de tu mototaxi</label><input type="file" id="d-foto-taxi" accept="image/*">
+        <div class="row"><div><label>Color del mototaxi</label><input id="d-color" required placeholder="Ej: rojo"></div><div><label>Modelo</label><input id="d-modelo" required placeholder="Ej: Bajaj 2023"></div></div>
+        <div class="row"><div><label>País</label><input id="d-pais" value="México"></div><div><label>Estado</label><input id="d-estado" value="Yucatán"></div></div>
+        <div class="row"><div><label>Colonia</label><input id="d-colonia"></div><div><label>Pueblo</label><input id="d-pueblo" required placeholder="Ej: Homún"></div></div>
+        <label>Tu rango para recoger</label><select id="d-rango"><option value="pueblo">Solo en mi pueblo</option><option value="cercanos">Pueblos cercanos</option></select>
+        <label>Tu horario de trabajo</label><input id="d-horario" placeholder="Ej: 6 am a 10 pm, o 24/7">
+        <label><input type="checkbox" id="d-urgencia" style="width:auto"> 🌙 Quiero recibir llamadas de urgencia de madrugada (12 a 6 am, costo extra)</label>
+        <label>Foto de tu INE (solo para verificar tu perfil)</label><input type="file" id="d-ine" accept="image/*">
+        <label><input type="checkbox" id="d-terminos" required style="width:auto"> He leído los términos y condiciones de privacidad y estoy de acuerdo</label>
+        <br><br><button class="btn btn-green">Enviar mi registro</button>
+      </form>
+    </div>
+    <div class="card"><h3>Solicitudes para ti</h3><div id="driverRequests"></div></div>
+  </section>
+  <section id="view-admin" class="hidden">
+    <div class="card" id="adminBox"></div>
+  </section>
+  <div class="card danger">
+    <b>¿Te sientes en peligro? ¿Actitudes sospechosas?</b>
+    <p class="small">Chofer o pasajero: si notas comportamientos raros, puedes llamar al 911.</p>
+    <button class="btn btn-red" onclick="call911()">🚨 Llamar al 911</button>
+  </div>
+  <div class="card" id="termsCard" style="font-size:14px">
+    <h3>Términos y privacidad — LLE-VA-ME</h3>
+    <p><b>Responsable:</b> JOSE ESPINOSA CHI, Homún, Yucatán. Los datos solo se usan para el viaje. La ubicación exacta solo la ve el chofer que acepta, solo durante el viaje. El teléfono solo se muestra después de la aceptación. No se venden datos. Puedes pedir que se borre tu cuenta al administrador.</p>
+    <p>La app no se hace responsable de objetos olvidados ni de daños al mototaxi. Precio aprox. $10 por un solo destino (trate con el mototaxista). Pago en efectivo. El cliente puede pedir para otra persona con su nombre y teléfono. Si pides para otra persona, sus datos se usan solo para ese viaje.</p>
+    <p>En emergencia real, llama al 911.</p>
+  </div>
+  <footer>LLE-VA-ME · Homún, Yucatán · Versión estática para GitHub / Vercel · Los datos se guardan solo en este celular (localStorage).</footer>
+</div>
+<div class="sticky"><button class="btn btn-green" id="stickyBtn" onclick="stickyAction()">🛺 Pedir mi mototaxi</button></div>
+<script>
+// LLE-VA-ME — versión estática. Datos solo en este celular (localStorage).
+const K={drivers:'llevame_drivers',trips:'llevame_trips',places:'llevame_places',profile:'llevame_profile',admin:'llevame_admin',reviews:'llevame_reviews',reports:'llevame_reports'};
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const maskPhone=p=>{p=String(p||'');return p.length>4?'*** *** '+p.slice(-4):'***'};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const code4=()=>String(Math.floor(1000+Math.random()*9000));
+let gps=null;
+const COLORS={rojo:'#dc2626',azul:'#2563eb',verde:'#16a34a',amarillo:'#eab308',negro:'#111827',blanco:'#f8fafc',naranja:'#ea580c',rosa:'#ec4899',morado:'#7c3aed',café:'#6F6242',gris:'#6b7280'};
+const colorDot=c=>COLORS[(c||'').toLowerCase()]||'#94a3b8';
+const DIS={ninguna:['',''],sordera:['🦻','No escucha'],ceguera:['🦯','No ve'],silla:['♿','Silla de ruedas'],otra:['✋','Necesita apoyo']};
+function showNotice(t){const n=document.getElementById('notice');n.textContent=t;n.classList.remove('hidden');setTimeout(()=>n.classList.add('hidden'),6000);}
+function showTab(t){['pasajero','chofer','admin'].forEach(x=>{document.getElementById('view-'+x).classList.toggle('hidden',x!==t);document.getElementById('tab-'+x).classList.toggle('active',x===t)});renderAll();}
+function showTerms(e){if(e)e.preventDefault();document.getElementById('termsCard').scrollIntoView({behavior:'smooth'});}
+function toggleOtra(){document.getElementById('otraBox').classList.toggle('hidden',!document.getElementById('p-otra').checked);}
+function toggleProg(){document.getElementById('progBox').classList.toggle('hidden',document.getElementById('p-cuando').value!=='programado');}
+function toggleDrivers(){const el=document.getElementById('driverList');el.classList.toggle('hidden');renderDrivers();}
+function useGPS(){const b=document.getElementById('gpsBtn');if(!navigator.geolocation){alert('Tu celular no permite GPS. Escribe una referencia.');return;}b.textContent='📍 Buscando tu ubicación…';navigator.geolocation.getCurrentPosition(p=>{gps={lat:p.coords.latitude,lng:p.coords.longitude};b.textContent='✓ Tu ubicación está lista';b.style.background='#1F9D66';document.getElementById('gpsStatus').textContent='Ubicación lista. Solo el chofer que acepte la ve.';},()=>{alert('No se pudo tomar el GPS. Escribe una referencia de dónde te recogen.');b.textContent='📍 Usa mi ubicación actual';},{timeout:10000});}
+function ensureProfile(){const pr=load(K.profile,null);if(pr)return pr;alert('Primero crea tu cuenta de pasajero (una sola vez): pon tu discapacidad si tienes, acepta los términos y listo.');document.getElementById('accountBox').scrollIntoView({behavior:'smooth'});return null;}
+function createProfile(){const dis=document.getElementById('acc-disc').value;const ok=document.getElementById('acc-terms').checked;if(!ok){alert('Para crear tu cuenta tienes que aceptar los términos y la privacidad.');return;}const tel=document.getElementById('p-tel').value.trim();if(!tel){alert('Pon tu teléfono arriba para crear tu cuenta.');return;}save(K.profile,{tel,disc:dis,terms:true,created:new Date().toISOString()});showNotice('Cuenta creada. Tu icono de discapacidad ya sale en tu perfil y en tus pedidos.');renderAll();}
+function submitTrip(e){e.preventDefault();const prof=ensureProfile();if(!prof)return false;const nombre=document.getElementById('p-nombre').value.trim(),tel=document.getElementById('p-tel').value.trim(),dest=document.getElementById('p-destino').value.trim(),ref=document.getElementById('p-ref').value.trim();if(!gps&&!ref){alert('Toca «📍 Usa mi ubicación actual» para compartir tu ubicación, o escribe una referencia de dónde te recogen.');return false;}let otra=null;if(document.getElementById('p-otra').checked){const n=document.getElementById('p-otra-nombre').value.trim(),t=document.getElementById('p-otra-tel').value.trim();if(!t){alert('Si pides para otra persona, su teléfono es obligatorio.');return false;}otra={nombre:n,tel:t};}let cuando='ahora',fecha=null;if(document.getElementById('p-cuando').value==='programado'){fecha=document.getElementById('p-fecha').value;if(!fecha){alert('Pon el día y la hora del viaje programado.');return false;}if(new Date(fecha)<new Date()){alert('Esa fecha ya pasó. Pon una fecha futura.');return false;}cuando='programado';}const trips=load(K.trips,[]);const trip={id:uid(),code:code4(),nombre,tel,destino:dest,ref,personas:document.getElementById('p-personas').value,carga:document.getElementById('p-carga').value,billete:document.getElementById('p-billete').value,cambio:document.getElementById('p-cambio').value,mascota:document.getElementById('p-mascota').checked,otra,cuando,fecha,gps,status:'pendiente',created:new Date().toISOString(),disc:prof.disc};trips.push(trip);save(K.trips,trips);save('llevame_last',trip);showNotice(cuando==='programado'?'Viaje programado. Los choferes lo ven desde ahora y lo pueden aceptar antes.':'¡Pedido enviado a todos los mototaxistas! Espera a que uno acepte.');renderAll();return false;}
+function repeatTrip(){const last=load('llevame_last',null);if(!last){alert('Aún no tienes un viaje anterior para repetir.');return;}document.getElementById('p-destino').value=last.destino;document.getElementById('p-personas').value=last.personas||1;document.getElementById('p-carga').value=last.carga||'';document.getElementById('p-ref').value=last.ref||'';showNotice('Viaje anterior listo. Revisa y pica Pedir mi mototaxi.');window.scrollTo({top:0,behavior:'smooth'});}
+function stickyAction(){const f=document.getElementById('tripForm');if(document.getElementById('view-pasajero').classList.contains('hidden'))showTab('pasajero');f.scrollIntoView({behavior:'smooth'});if(document.getElementById('stickyBtn').textContent.includes('Pedir')){/* el envío se hace con el botón del formulario en la versión estática: se añade abajo */}}
+function avgStars(id){const r=load(K.reviews,[]).filter(x=>x.target===id);if(!r.length)return 'Sin estrellas aún';return '⭐ '+(r.reduce((a,b)=>a+b.stars,0)/r.length).toFixed(1)+' ('+r.length+')';}
+function renderDrivers(){const ds=load(K.drivers,[]).filter(d=>d.status==='aprobado'&&d.disponible!==false);document.getElementById('driverCount').textContent=ds.length;const el=document.getElementById('driverList');el.innerHTML=ds.length?ds.map(d=>`<div class="driver">${d.foto?`<img src="${d.foto}" alt="Foto de ${esc(d.nombre)}">`:`<div class="avatar">🛺</div>`}<div><h3>${esc(d.nombre)} ${d.verificado?'✓':''}</h3>${d.verificado?'<span class="badge">✓ Verificado</span>':''}${(d.badges||[]).map(b=>`<span class="badge gold">${esc(b)}</span>`).join('')}<br><span class="colorpill"><span class="dot" style="background:${colorDot(d.color)}"></span>${esc(d.color)} · ${esc(d.modelo)}</span><br><span class="small">${esc(d.pueblo||'')} · ${esc(d.horario||'')} · ${d.rango==='cercanos'?'Pueblos cercanos':'Solo en mi pueblo'}</span><br><span class="small">${d.urgencia?'🌙 Viajes de madrugada · Se le puede llamar de urgencia':'🚫 No recibe llamadas de urgencia de madrugada'}</span><br><span class="small">${avgStars(d.id)} · Tel: ${maskPhone(d.tel)}</span><br><button class="btn-small btn-blue btn" onclick="rate('${d.id}','chofer')">⭐ Calificar</button> <button class="btn-small btn-ghost btn" onclick="report('${d.id}')">Reportar</button></div></div>`).join(''):'<p class="small">Aún no hay choferes aprobados. Regístrate como mototaxista y el admin te aprueba.</p>';}
+function showNightDrivers(){const ds=load(K.drivers,[]).filter(d=>d.status==='aprobado'&&d.urgencia);document.getElementById('nightList').innerHTML=ds.length?'<p>Solo estos choferes aceptan llamadas de madrugada (costo extra, acuérdalo antes):</p>'+ds.map(d=>`<p>🛺 <b>${esc(d.nombre)}</b> — ${esc(d.color)} ${esc(d.modelo)} · ${maskPhone(d.tel)}</p>`).join(''):'<p class="small">Nadie tiene activado el taxi nocturno por ahora. Pide normal y espera, o inténtalo más tarde.</p>';}
+function renderAccount(){const pr=load(K.profile,null);const box=document.getElementById('accountBox');if(!pr){box.innerHTML=`<div class="notice"><b>Tu cuenta (una sola vez)</b><br><label>¿Necesitas algo especial? (discapacidad)</label><select id="acc-disc"><option value="ninguna">Ninguna</option><option value="sordera">No escucho 🦻</option><option value="ceguera">No veo 🦯</option><option value="silla">Silla de ruedas ♿</option><option value="otra">Otra ✋</option></select><label><input type="checkbox" id="acc-terms" style="width:auto"> He leído los términos y condiciones de privacidad y estoy de acuerdo</label><br><br><button type="button" class="btn btn-blue" onclick="createProfile()">Crear mi cuenta</button><p class="small">Tu icono sale en tu perfil y junto a tu nombre en el pedido, para que el chofer lo reconozca en cada viaje.</p></div>`;}else{const ic=DIS[pr.disc]||DIS.ninguna;box.innerHTML=`<p>👤 Tu cuenta: <b>${ic[0]} ${ic[1]||'Sin discapacidad registrada'}</b> · Tel ${maskPhone(pr.tel)} · <a href="#" onclick="localStorage.removeItem('${K.profile}');renderAll();return false">Cambiar</a></p>`;}}
+function renderMyTrips(){const tel=(document.getElementById('p-tel').value||'').trim();const trips=load(K.trips,[]).filter(t=>!tel||t.tel===tel);const el=document.getElementById('myTrips');if(!trips.length){el.innerHTML='<p class="small">Tus viajes salen aquí.</p><button type="button" class="btn btn-ghost" onclick="repeatTrip()">🔁 Pedir otra vez el mismo viaje</button>';return;}el.innerHTML='<h3>Mis viajes</h3>'+trips.slice(-5).reverse().map(t=>{const d=t.driverId?load(K.drivers,[]).find(x=>x.id===t.driverId):null;return `<div class="card" style="margin:8px 0"><b>${esc(t.destino)}</b> · ${t.status==='pendiente'?'⏳ Esperando chofer':t.status==='aceptado'?'✅ Aceptado':t.status==='llegado'?'🔔 ¡Tu mototaxi ya está afuera!':t.status==='completado'?'✔️ Completado':'❌ Cancelado'} ${t.cuando==='programado'?'📅 Programado '+esc(t.fecha||''):''}<br><span class="small">Código de viaje: <b>${t.code}</b> · ${t.personas} persona(s)${t.carga?' · '+esc(t.carga):''}${t.mascota?' · 🐾 Mascota':''}${t.otra?' · Para: '+esc(t.otra.nombre||'otra persona'):''}</span>${d?`<br>🛺 ${esc(d.nombre)} · ${esc(d.color)} ${esc(d.modelo)} · Tel: <a href="tel:${esc(d.tel)}">${esc(d.tel)}</a>${t.status==='llegado'?`<div class="ok"><b>🔔 ¡Tu mototaxi ya está afuera!</b><br>${esc(d.nombre)} · ${esc(d.color)} ${esc(d.modelo)} · Código: ${t.code}</div>`:''}`:''}${t.status==='completado'?`<br><button class="btn-small btn-blue btn" onclick="rate('${t.driverId||''}','chofer')">⭐ Calificar al chofer</button> <button class="btn-small btn-ghost btn" onclick="askSavePlace('${esc(t.destino)}')">⭐ Guardar este destino</button> <button class="btn-small btn-ghost btn" onclick="repeatTrip()">🔁 Pedir otra vez</button>`:''}</div>`}).join('');}
+function askSavePlace(dest){const name=prompt('¿Con qué nombre corto lo guardas? Casa, Centro, Escuela, Trabajo, Mercado u otro:', 'Casa');if(!name)return;const ps=load(K.places,[]);const i=ps.findIndex(p=>p.destino===dest);if(i>=0)ps[i].nombre=name;else ps.push({nombre:name,destino:dest});save(K.places,ps);showNotice('Destino guardado. La próxima vez lo pides en un toque.');renderAll();}
+function renderPlaces(){const ps=load(K.places,[]);document.getElementById('savedPlaces').innerHTML=ps.length?'<label>⭐ Tus destinos frecuentes</label>'+ps.map((p,i)=>`<span class="pill">⭐ ${esc(p.nombre)} <button onclick="document.getElementById('p-destino').value='${esc(p.destino)}'">usar</button> <button onclick="deletePlace(${i})">✕</button></span>`).join(''):'';}
+function deletePlace(i){const ps=load(K.places,[]);ps.splice(i,1);save(K.places,ps);renderAll();}
+function fileToData(id){return new Promise(res=>{const f=document.getElementById(id).files[0];if(!f)return res('');const r=new FileReader();r.onload=()=>res(r.result);r.readAsDataURL(f);});}
+async function registerDriver(e){e.preventDefault();const foto=await fileToData('d-foto'),fotoTaxi=await fileToData('d-foto-taxi'),ine=await fileToData('d-ine');const ds=load(K.drivers,[]);ds.push({id:uid(),nombre:document.getElementById('d-nombre').value.trim(),tel:document.getElementById('d-tel').value.trim(),foto,fotoTaxi,color:document.getElementById('d-color').value.trim(),modelo:document.getElementById('d-modelo').value.trim(),pais:document.getElementById('d-pais').value,estado:document.getElementById('d-estado').value,colonia:document.getElementById('d-colonia').value,pueblo:document.getElementById('d-pueblo').value.trim(),rango:document.getElementById('d-rango').value,horario:document.getElementById('d-horario').value,urgencia:document.getElementById('d-urgencia').checked,ine:!!ine,status:'pendiente',verificado:false,badges:[],disponible:true,created:new Date().toISOString()});save(K.drivers,ds);alert('Registro enviado. Queda pendiente hasta que el admin lo apruebe.');e.target.reset();renderAll();return false;}
+function renderDriverPanel(){const ds=load(K.drivers,[]);const box=document.getElementById('driverPanel');const tel=prompt('Para ver tu panel de chofer, escribe tu teléfono de registro (solo en este celular):');if(!tel){box.innerHTML='<p class="small">Pica “Ver mi panel” y pon tu teléfono para ver si ya te aprobaron.</p><button class="btn btn-blue" onclick="renderDriverPanel()">Ver mi panel</button>';return;}const d=ds.find(x=>x.tel===tel.trim());if(!d){box.innerHTML='<p>No hay un chofer con ese teléfono en este celular. Regístrate arriba.</p>';return;}box.innerHTML=`<p><b>${esc(d.nombre)}</b> · Estado: <b>${d.status==='aprobado'?'✅ Aprobado':d.status==='rechazado'?'❌ Rechazado':'⏳ Pendiente de aprobación'}</b>${d.note?'<br>Nota del admin: '+esc(d.note):''}<br><label><input type="checkbox" ${d.disponible?'checked':''} onchange="toggleAvailable('${d.id}',this.checked)" style="width:auto"> Estoy disponible</label></p>`;const mine=load(K.trips,[]).filter(t=>t.driverId===d.id&&(t.status==='aceptado'||t.status==='llegado'));document.getElementById('driverRequests').innerHTML=(mine.map(t=>`<div class="card" style="margin:8px 0"><b>${esc(t.destino)}</b> · Código ${t.code} · Tel pasajero: ${esc(t.tel)}${t.gps?` · Ubicación exacta: ${t.gps.lat.toFixed(5)}, ${t.gps.lng.toFixed(5)}`:''}<br><button class="btn-small btn-blue btn" onclick="driverAction('${t.id}','llegado')">Ya llegué</button> <button class="btn-small btn-green btn" onclick="driverAction('${t.id}','completado')">Viaje completado</button></div>`).join('')||'');
+const reqs=load(K.trips,[]).filter(t=>t.status==='pendiente');document.getElementById('driverRequests').innerHTML+=reqs.length?reqs.map(t=>{const pr=DIS[t.disc]||DIS.ninguna;return `<div class="card" style="margin:8px 0"><b>${esc(t.destino)}</b> ${pr[0]} · ${t.personas} persona(s)${t.carga?' · '+esc(t.carga):''}${t.mascota?' · 🐾 Mascota':''}<br><span class="small">De: ${esc(t.nombre)} · Tel: ${maskPhone(t.tel)} (se muestra completo solo si aceptas)${t.otra?' · Para: '+esc(t.otra.nombre)+' · Tel viajero: '+maskPhone(t.otra.tel):''}<br>Ref: ${esc(t.ref||'Sin referencia')} · ${t.billete?'Billete '+esc(t.billete):''} ${t.cambio?'· '+esc(t.cambio):''} · ${t.cuando==='programado'?'📅 '+esc(t.fecha||''):''}</span><br><button class="btn-small btn-green btn" onclick="acceptTrip('${t.id}')">Aceptar este viaje</button></div>`}).join(''):'<p class="small">No hay solicitudes pendientes en este celular.</p>';}
+function toggleAvailable(id,v){const ds=load(K.drivers,[]);const d=ds.find(x=>x.id===id);if(d){d.disponible=v;save(K.drivers,ds);renderAll();}}
+function acceptTrip(id){const ds=load(K.drivers,[]);const tel=prompt('Escribe tu teléfono de chofer para aceptar:');const d=ds.find(x=>x.tel===(tel||'').trim()&&x.status==='aprobado');if(!d){alert('Solo un chofer aprobado puede aceptar.');return;}const precio=prompt('Precio aproximado total (ej: $10, o lo que acuerdes):','$10');const eta=prompt('¿En cuántos minutos llegas?','10');const trips=load(K.trips,[]);const t=trips.find(x=>x.id===id);if(!t)return;t.status='aceptado';t.driverId=d.id;t.precio=precio;t.eta=eta;save(K.trips,trips);alert('Aceptado. Ahora tú ves la ubicación exacta del pasajero y su teléfono completo. Código de viaje: '+t.code);renderAll();}
+function driverAction(id,action){const trips=load(K.trips,[]);const t=trips.find(x=>x.id===id);if(!t)return;if(action==='llegado'){t.status='llegado';showNotice('🔔 ¡Tu mototaxi ya está afuera!');}if(action==='completado')t.status='completado';save(K.trips,trips);renderAll();}
+function rate(target,kind){if(!target){alert('Primero completa un viaje.');return;}const s=parseInt(prompt('¿Cuántas estrellas del 1 al 5?','5'),10);if(!s||s<1||s>5)return;const anon=confirm('¿Quieres que sea anónima? Aceptar = anónima, Cancelar = con tu nombre.');const txt=prompt('¿Qué te pareció? (opcional)','');const rs=load(K.reviews,[]);rs.push({target,kind,stars:s,anon,txt,created:new Date().toISOString()});save(K.reviews,rs);showNotice('Gracias por tu calificación.');renderAll();}
+function report(target){const why=prompt('¿Por qué lo reportas?','Comportamiento sospechoso');if(!why)return;const rs=load(K.reports,[]);rs.push({target,why,created:new Date().toISOString()});save(K.reports,rs);alert('Reporte enviado al admin. Si es emergencia, llama al 911.');}
+function call911(){if(confirm('¿Notas comportamientos raros? ¿Estás seguro que quieres llamar al 911?')){window.location.href='tel:911';}}
+function hashPw(p){let h=5381;const s='llevame-'+p;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))>>>0;return 'h'+h.toString(36);}
+function renderAdmin(){const box=document.getElementById('adminBox');const adm=load(K.admin,null);if(!adm){box.innerHTML=`<h3>Crear contraseña de administrador</h3><p class="small">Solo el dueño (JOSE) crea esta contraseña una sola vez. <b>Escríbela en papel: si se olvida, no se puede recuperar en esta versión estática.</b></p><label>Contraseña que quieres</label><input type="password" id="adm-new"><label>Repite la contraseña</label><input type="password" id="adm-new2"><br><br><button class="btn btn-green" onclick="createAdmin()">Guardar mi contraseña</button>`;return;}if(!adm.logged){box.innerHTML=`<h3>Panel de administrador</h3><label>Contraseña de admin</label><input type="password" id="adm-pass"><br><br><button class="btn btn-blue" onclick="loginAdmin()">Entrar</button>`;return;}const ds=load(K.drivers,[]);const reps=load(K.reports,[]);const trips=load(K.trips,[]);box.innerHTML=`<h3>Panel de administrador — solo el dueño</h3><p class="small">Viajes hoy: ${trips.length} · Choferes: ${ds.length} · Reportes: ${reps.length}</p><h4>Choferes pendientes</h4>${ds.filter(d=>d.status==='pendiente').map(d=>`<div class="card" style="margin:8px 0">${d.foto?`<img src="${d.foto}" style="width:80px;height:80px;object-fit:cover;border-radius:10px">`:''}<br><b>${esc(d.nombre)}</b> · ${esc(d.pueblo)} · ${esc(d.color)} ${esc(d.modelo)} · INE: ${d.ine?'Sí (verifica que la foto coincida)':'No subió'}<br><button class="btn-small btn-green btn" onclick="adminDriver('${d.id}','aprobado')">Aceptar</button> <button class="btn-small btn-ghost btn" onclick="adminDriver('${d.id}','corregir')">Pedir corrección</button> <button class="btn-small btn-red btn" onclick="adminDriver('${d.id}','rechazado')">Rechazar</button></div>`).join('')||'<p class="small">No hay pendientes.</p>'}<h4>Todos los choferes</h4>${ds.map(d=>`<p>${esc(d.nombre)} — ${d.status} ${d.verificado?'✓':''} <button class="btn-small btn-ghost btn" onclick="toggleBadge('${d.id}')">Insignia buen comportamiento</button> <button class="btn-small btn-ghost btn" onclick="toggleVerified('${d.id}')">Verificado</button></p>`).join('')||'<p class="small">Sin choferes.</p>'}<h4>Reportes</h4>${reps.map(r=>`<p>• ${esc(r.why)} — ${esc(r.created)}</p>`).join('')||'<p class="small">Sin reportes.</p>'}<br><button class="btn btn-ghost" onclick="changeAdmin()">Cambiar mi contraseña</button> <button class="btn btn-ghost" onclick="logoutAdmin()">Salir</button>`;}
+function createAdmin(){const a=document.getElementById('adm-new').value,b=document.getElementById('adm-new2').value;if(!a||a!==b){alert('Las contraseñas no coinciden.');return;}save(K.admin,{hash:hashPw(a),logged:true});showNotice('Contraseña creada. Ya entraste al panel.');renderAdmin();}
+function loginAdmin(){const adm=load(K.admin,null);if(adm&&hashPw(document.getElementById('adm-pass').value)===adm.hash){adm.logged=true;save(K.admin,adm);renderAdmin();}else alert('Contraseña incorrecta.');}
+function logoutAdmin(){const adm=load(K.admin,null);adm.logged=false;save(K.admin,adm);renderAdmin();}
+function changeAdmin(){const adm=load(K.admin,null);const n=prompt('Nueva contraseña de admin:');if(!n)return;adm.hash=hashPw(n);save(K.admin,adm);alert('Contraseña cambiada. Escríbela en papel.');}
+function adminDriver(id,action){const ds=load(K.drivers,[]);const d=ds.find(x=>x.id===id);if(!d)return;if(action==='aprobado'){d.status='aprobado';d.verificado=true;}if(action==='rechazado'){d.status='rechazado';}if(action==='corregir'){const note=prompt('¿Qué le falta o qué debe corregir?','Falta foto clara / datos incompletos');d.note=note||'';alert('Se le avisará al chofer qué debe corregir.');}save(K.drivers,ds);renderAll();}
+function toggleBadge(id){const ds=load(K.drivers,[]);const d=ds.find(x=>x.id===id);if(!d)return;d.badges=d.badges||[];const i=d.badges.indexOf('Buen comportamiento');if(i>=0)d.badges.splice(i,1);else d.badges.push('Buen comportamiento');save(K.drivers,ds);renderAll();}
+function toggleVerified(id){const ds=load(K.drivers,[]);const d=ds.find(x=>x.id===id);if(!d)return;d.verificado=!d.verificado;save(K.drivers,ds);renderAll();}
+function renderAll(){renderAccount();renderPlaces();renderMyTrips();renderDrivers();renderAdmin();const trips=load(K.trips,[]);const last=trips[trips.length-1];if(last&&last.status==='llegado'){/* aviso ya en tarjeta */}}
+// Botón fijo: en esta versión estática abre el formulario y, si ya está lleno, lo envía.
+document.addEventListener('DOMContentLoaded',()=>{renderAll();const f=document.getElementById('tripForm');const send=document.createElement('button');send.className='btn btn-green';send.style.marginTop='12px';send.textContent='🛺 Pedir mi mototaxi';send.type='submit';f.appendChild(send);const b=document.getElementById('stickyBtn');b.onclick=()=>{showTab('pasajero');document.getElementById('tripForm').scrollIntoView({behavior:'smooth'});};});
+
+</script>
+</body>
+</html>
