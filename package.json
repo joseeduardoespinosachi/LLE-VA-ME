@@ -1,0 +1,1 @@
+{"dependencies":{"@neondatabase/serverless":"^0.10.4"},"description":"LLE-VA-ME — Mototaxis Homún. Versión compartida: los choferes y los viajes se guardan en Neon (Postgres) y se comparten entre todos los celulares.","engines":{"node":">=18"},"name":"lle-va-me","private":true,"type":"commonjs","version":"2.0.0"}
